@@ -1,0 +1,183 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+        href="http://github.com/zckrs/gulp-css-base64"
+
+    >gulp-css-base64 (v1.3.4)</a>
+</h1>
+<h4>Gulp's task for transform all resources found in a CSS into base64-encoded data URI strings</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.gulp-css-base64">module gulp-css-base64</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.gulp-css-base64.gulp-css-base64">
+            function <span class="apidocSignatureSpan"></span>gulp-css-base64
+            <span class="apidocSignatureSpan">(opts)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.gulp-css-base64" id="apidoc.module.gulp-css-base64">module gulp-css-base64</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.gulp-css-base64.gulp-css-base64" id="apidoc.element.gulp-css-base64.gulp-css-base64">
+        function <span class="apidocSignatureSpan"></span>gulp-css-base64
+        <span class="apidocSignatureSpan">(opts)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">function gulpCssBase64(opts) {
+  opts = JSON.parse(JSON.stringify(opts || {}));
+  opts.maxWeightResource = opts.maxWeightResource || 32768;
+  if (util.isArray(opts.extensionsAllowed)) {
+    opts.extensionsAllowed = opts.extensionsAllowed;
+  } else {
+    opts.extensionsAllowed = [];
+  }
+  opts.extensionsAllowed = opts.extensionsAllowed || [];
+  opts.baseDir = opts.baseDir || &#x27;&#x27;;
+  opts.verbose = process.argv.indexOf(&#x27;--verbose&#x27;) !== -1;
+
+    // Creating a stream through which each file will pass
+  var stream = through.obj(function (file, enc, callbackStream) {
+    var currentStream = this;
+    var cache = [];
+
+    if (file.isNull()) {
+            // Do nothing if no contents
+      currentStream.push(file);
+
+      return callbackStream();
+    }
+
+    if (file.isBuffer()) {
+      var src = file.contents.toString();
+      var result = [];
+
+      async.whilst(
+                function () {
+                  result = rImages.exec(src);
+
+                  return result !== null;
+                },
+                function (callback) {
+                  if (cache[result[1]]) {
+                    src = src.replace(result[1], cache[result[1]]);
+                    callback();
+                    return;
+                  }
+
+                  var pureUrl = result[1].split(&#x27;?&#x27;)[0].split(&#x27;#&#x27;)[0];
+                  if (opts.extensionsAllowed.length !== 0 &#x26;&#x26; opts.extensionsAllowed.indexOf(path.extname(pureUrl)) === -1) {
+                    log(&#x27;Ignores &#x27; + chalk.yellow(result[1]) + &#x27;, extension not allowed &#x27; + chalk.yellow(path.extname(result[1])),
+opts.verbose);
+                    callback();
+                    return;
+                  }
+
+                  encodeResource(result[1], file, opts, function (fileRes) {
+                    if (undefined !== fileRes) {
+                      if (fileRes.contents.length &#x3e; opts.maxWeightResource) {
+                        log(&#x27;Ignores &#x27; + chalk.yellow(result[1]) + &#x27;, file is too big &#x27; + chalk.yellow(fileRes.contents.length + &#x27;
+bytes&#x27;), opts.verbose);
+                        callback();
+                        return;
+                      }
+
+                      var strRes = &#x27;data:&#x27; + mime.lookup(fileRes.path) + &#x27;;base64,&#x27; + fileRes.contents.toString(&#x27;base64&#x27;);
+                      src = src.replace(result[1], strRes);
+
+                            // Store in cache
+                      cache[result[1]] = strRes;
+                    }
+                    callback();
+                  });
+                },
+                function () {
+                  file.contents = new Buffer(src);
+                  currentStream.push(file);
+
+                  return callbackStream();
+                }
+            );
+    }
+
+    if (file.isStream()) {
+      this.emit(&#x27;error&#x27;, new gutil.PluginError(&#x27;gulp-css-base64&#x27;, &#x27;Stream not supported!&#x27;));
+    }
+  });
+
+    // returning the file stream
+  return stream;
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
